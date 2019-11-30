@@ -1,0 +1,17 @@
+{
+  "name": "dividend-checkpoint",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "truffle compile",
+    "test": "./scripts/test.sh"
+  },
+  "devDependencies": {
+    "ganache-cli": "^6.7.0",
+    "truffle": "^5.1.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^2.4.0"
+  }
+}
