@@ -107,27 +107,6 @@ contract CheckpointedToken is CheckpointedTokenStorage, ERC20Mintable, Reentranc
     return currentCheckpointId;
   }
 
-  // /**
-	//  * @notice Retrieves list of investors, their balances
-	//  * @param _checkpointId Checkpoint Id to query for
-	//  * @return address[] list of investors
-	//  * @return uint256[] investor balances
-	//  */
-	// function createTokenCheckpointData(
-  //   uint256 _checkpointId
-  // )
-  //   external
-  //   view 
-  //   returns (address[] memory investors, uint256[] memory balances) 
-  // {
-	// 	require(_checkpointId <= currentCheckpointId, "Invalid checkpoint");
-	// 	investors = getInvestorsAt(_checkpointId);
-	// 	balances = new uint256[](investors.length);
-	// 	for (uint256 i; i < investors.length; i++) {
-	// 		balances[i] = balanceOfAt(investors[i], _checkpointId);
-	// 	}
-	// }
-
   function _isExistingInvestor(address _investor) internal view returns(bool) {
     return investorExists[_investor];
   }
