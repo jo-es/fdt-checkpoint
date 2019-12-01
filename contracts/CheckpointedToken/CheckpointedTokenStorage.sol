@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import "../Checkpoint/Checkpoint.sol";
 
 
-contract SecurityTokenStorage is Checkpoint {
+contract CheckpointedTokenStorage is Checkpoint {
 
   // Mapping of checkpoints that relate to total supply
   mapping(uint256 => uint256) checkpointTotalSupply;

@@ -4,10 +4,10 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "./SecurityTokenStorage.sol";
+import "./CheckpointedTokenStorage.sol";
 
 
-contract SecurityToken is SecurityTokenStorage, ERC20Mintable, ReentrancyGuard {
+contract CheckpointedToken is CheckpointedTokenStorage, ERC20Mintable, ReentrancyGuard {
 
   /**
    * @notice returns an array of investors with non zero balance at a given checkpoint
@@ -99,7 +99,7 @@ contract SecurityToken is SecurityTokenStorage, ERC20Mintable, ReentrancyGuard {
     return checkpointTotalSupply[_checkpointId];
   }
 
-  function createSecurityTokenCheckpoint() public returns(uint256) {
+  function createTokenCheckpoint() public returns(uint256) {
     createCheckpoint();
 
     checkpointTotalSupply[currentCheckpointId] = totalSupply();
@@ -113,7 +113,7 @@ contract SecurityToken is SecurityTokenStorage, ERC20Mintable, ReentrancyGuard {
 	//  * @return address[] list of investors
 	//  * @return uint256[] investor balances
 	//  */
-	// function getSecurityTokenCheckpointData(
+	// function createTokenCheckpointData(
   //   uint256 _checkpointId
   // )
   //   external
