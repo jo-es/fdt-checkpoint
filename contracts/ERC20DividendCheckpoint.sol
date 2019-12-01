@@ -29,7 +29,7 @@ contract ERC20DividendCheckpoint is ERC20DividendCheckpointStorage, DividendChec
 	constructor(address payable _wallet) DividendCheckpoint(_wallet) public {}
 
 	/**
-	 * @notice Creates a dividend and checkpoint for the dividend
+	 * @notice Creates a dividend and checkpoint
 	 * @param _token Address of ERC20 token in which dividend is to be denominated
 	 * @param _amount Amount of specified token for dividend
 	 * @param _name Name/Title for identification
@@ -39,39 +39,21 @@ contract ERC20DividendCheckpoint is ERC20DividendCheckpointStorage, DividendChec
 		uint256 _amount,
 		bytes32 _name
 	)
-		external
-	{
-		uint256 checkpointId = createSecurityTokenCheckpoint();
-		createDividendWithCheckpoint(_token, _amount, checkpointId, _name);
-	}
-
-	/**
-	 * @notice Creates a dividend with a provided checkpoint
-	 * @param _token Address of ERC20 token in which dividend is to be denominated
-	 * @param _amount Amount of specified token for dividend
-	 * @param _checkpointId Checkpoint id from which to create dividends
-	 * @param _name Name/Title for identification
-	 */
-	function createDividendWithCheckpoint(
-		address _token,
-		uint256 _amount,
-		uint256 _checkpointId,
-		bytes32 _name
-	)
 		public
 	{
+		uint256 checkpointId = createSecurityTokenCheckpoint();
 		/*solium-disable-next-line security/no-block-members*/
 		require(_amount > 0, "No dividend sent");
 		require(_token != address(0), "Invalid token");
-		require(_checkpointId <= currentCheckpointId, "Invalid checkpoint");
+		require(checkpointId <= currentCheckpointId, "Invalid checkpoint");
 		require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "insufficent allowance");
 		require(_name != bytes32(0));
 		uint256 dividendIndex = dividends.length;
-		uint256 currentSupply = totalSupplyAt(_checkpointId);
+		uint256 currentSupply = totalSupplyAt(checkpointId);
 		require(currentSupply > 0, "Invalid supply");
 		dividends.push(
 			Dividend(
-				_checkpointId,
+				checkpointId,
 				now, /*solium-disable-line security/no-block-members*/
 				_amount,
 				0,
@@ -82,7 +64,7 @@ contract ERC20DividendCheckpoint is ERC20DividendCheckpointStorage, DividendChec
 
 		dividends[dividendIndex].totalSupply = currentSupply;
 		dividendTokens[dividendIndex] = _token;
-		_emitERC20DividendDepositedEvent(_checkpointId, _token, _amount, currentSupply, dividendIndex, _name);
+		_emitERC20DividendDepositedEvent(checkpointId, _token, _amount, currentSupply, dividendIndex, _name);
 	}
 
 	/**

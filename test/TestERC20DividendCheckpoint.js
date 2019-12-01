@@ -33,19 +33,7 @@ contract('ERC20DividendCheckpoint', async (accounts) => {
   let SampleTokenInstance;
   let ERC20DividendCheckpointInstance;
 
-  // SecurityToken Details
-  // Module key
-  const checkpointKey = 4;
-
-  //Manager details
-  const managerDetails = web3.utils.fromAscii('Hello');
-
-  const one_address = '0x0000000000000000000000000000000000000001';
   const address_zero = '0x0000000000000000000000000000000000000000';
-
-  let currentTime;
-
-  const DividendParameters = ['address'];
 
   before(async () => {
     currentTime = new BN(await latestTime());
@@ -245,28 +233,14 @@ contract('ERC20DividendCheckpoint', async (accounts) => {
       // assert.equal((await ERC20DividendCheckpointInstance.balanceOf(account_temp)).toString(), new BN(web3.utils.toWei('1', 'ether')).toString());
     })
 
-    it('Create another new dividend with explicit - fails bad checkpoint', async () => {
-      await catchRevert(
-        ERC20DividendCheckpointInstance.createDividendWithCheckpoint(
-          SampleTokenInstance.address,
-          new BN(web3.utils.toWei('20', 'ether')),
-          5,
-          dividendName,
-          { from: token_owner }
-        )
-      );
-    });
-
     it('Create another new dividend with explicit checkpoint', async () => {
-      let tx = await ERC20DividendCheckpointInstance.createDividendWithCheckpoint(
+      let tx = await ERC20DividendCheckpointInstance.createDividend(
         SampleTokenInstance.address,
         new BN(web3.utils.toWei('10', 'ether')),
-        3,
         dividendName,
         { from: token_owner }
       );
-
-      assert.equal(tx.logs[2].args._checkpointId.toNumber(), 3, 'Dividend should be created at checkpoint 3');
+      assert.equal(tx.logs[3].args._checkpointId.toNumber(), 4, 'Dividend should be created at checkpoint 3');
     });
 
     it('Investor 2 claims dividend, issuer pushes investor 1 - fails bad index', async () => {

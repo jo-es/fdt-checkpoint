@@ -22,9 +22,6 @@ import "./SecurityToken/SecurityToken.sol";
  */
 contract DividendCheckpoint is DividendCheckpointStorage, SecurityToken, Ownable {
 	using SafeMath for uint256;
-	uint256 internal constant e18 = uint256(10) ** uint256(18);
-
-	event UpdateDividendDates(uint256 indexed _dividendIndex, uint256 _expiry);
 
 
 	function _validDividendIndex(uint256 _dividendIndex) internal view {
