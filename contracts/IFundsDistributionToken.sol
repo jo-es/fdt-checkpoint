@@ -18,13 +18,13 @@ contract IFundsDistributionToken{
    */
   function withdrawFunds(uint256 depositId) public;
 
-  // /**
-  //  * @dev This event emits when new funds are distributed
-  //  * @param by the address of the sender who distributed funds
-  //  * @param depositId id of the deposit
-  //  * @param fundsDistributed the amount of funds received for distribution
-  //  */
-  // event FundsDistributed(address indexed by, uint256 depositId, uint256 fundsDistributed);
+  /**
+   * @dev This event emits when new funds are distributed
+   * @param by the address of the sender who distributed funds
+   * @param depositId id of the deposit
+   * @param fundsDistributed the amount of funds received for distribution
+   */
+  event FundsDistributed(address indexed by, uint256 depositId, uint256 fundsDistributed);
 
   /**
    * @dev This event emits when distributed funds are withdrawn by a token holder.

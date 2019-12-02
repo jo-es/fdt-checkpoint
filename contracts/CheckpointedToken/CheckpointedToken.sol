@@ -10,93 +10,93 @@ import "./CheckpointedTokenStorage.sol";
 contract CheckpointedToken is CheckpointedTokenStorage, ERC20Mintable, ReentrancyGuard {
 
   /**
-   * @notice returns an array of investors with non zero balance at a given checkpoint
-   * @param _checkpointId Checkpoint id at which investor list is to be populated
-   * @return list of investors
+   * @notice returns an array of holders with non zero balance at a given checkpoint
+   * @param checkpointId Checkpoint id at which holder list is to be populated
+   * @return list of holders
    */
-  function getInvestorsAt(uint256 _checkpointId) public view returns(address[] memory) {
+  function getHoldersAt(uint256 checkpointId) public view returns(address[] memory) {
     uint256 count;
     uint256 i;
-    address[] memory activeInvestors = investors;
-    for (i = 0; i < activeInvestors.length; i++) {
-      if (balanceOfAt(activeInvestors[i], _checkpointId) > 0) {
+    address[] memory activeHolders = holders;
+    for (i = 0; i < activeHolders.length; i++) {
+      if (balanceOfAt(activeHolders[i], checkpointId) > 0) {
         count++;
       } else {
-        activeInvestors[i] = address(0);
+        activeHolders[i] = address(0);
       }
     }
-    address[] memory holders = new address[](count);
+    address[] memory _holders = new address[](count);
     count = 0;
-    for (i = 0; i < activeInvestors.length; i++) {
-      if (activeInvestors[i] != address(0)) {
-        holders[count] = activeInvestors[i];
+    for (i = 0; i < activeHolders.length; i++) {
+      if (activeHolders[i] != address(0)) {
+        _holders[count] = activeHolders[i];
         count++;
       }
     }
-    return holders;
+    return _holders;
   }
 
-  function getInvestorsSubsetAt(
-    uint256 _checkpointId,
-    uint256 _start,
-    uint256 _end
+  function getHolderSubsetAt(
+    uint256 checkpointId,
+    uint256 start,
+    uint256 end
   )
     public
     view
     returns(address[] memory)
   {
-    uint256 size = investors.length;
-    if (_end >= size) {
-      size = size - _start;
+    uint256 size = holders.length;
+    if (end >= size) {
+      size = size - start;
     } else {
-      size = _end - _start + 1;
+      size = end - start + 1;
     }
-    address[] memory investorSubset = new address[](size);
+    address[] memory holderSubset = new address[](size);
     for(uint256 j; j < size; j++)
-      investorSubset[j] = investors[j + _start];
+      holderSubset[j] = holders[j + start];
     
     uint256 count;
     uint256 i;
-    for (i = 0; i < investorSubset.length; i++) {
-      if (balanceOfAt(investorSubset[i], _checkpointId) > 0) {
+    for (i = 0; i < holderSubset.length; i++) {
+      if (balanceOfAt(holderSubset[i], checkpointId) > 0) {
         count++;
       } else {
-        investorSubset[i] = address(0);
+        holderSubset[i] = address(0);
       }
     }
-    address[] memory holders = new address[](count);
+    address[] memory _holders = new address[](count);
     count = 0;
-    for (i = 0; i < investorSubset.length; i++) {
-      if (investorSubset[i] != address(0)) {
-        holders[count] = investorSubset[i];
+    for (i = 0; i < holderSubset.length; i++) {
+      if (holderSubset[i] != address(0)) {
+        _holders[count] = holderSubset[i];
         count++;
       }
     }
-    return holders;
+    return _holders;
   }
 
-  function getNumberOfInvestors() public view returns(uint256) {
-    return investors.length;
+  function getNumberOfHolders() public view returns(uint256) {
+    return holders.length;
   }
 
   /**
    * @notice Queries balances as of a defined checkpoint
-   * @param _investor Investor to query balance for
-   * @param _checkpointId Checkpoint ID to query as of
+   * @param holder Holder to query balance for
+   * @param checkpointId Checkpoint ID to query as of
    */
-  function balanceOfAt(address _investor, uint256 _checkpointId) public view returns(uint256) {
-    require(_checkpointId <= currentCheckpointId, "Invalid checkpoint");
-    return getValueAt(checkpointBalances[_investor], _checkpointId, balanceOf(_investor));
+  function balanceOfAt(address holder, uint256 checkpointId) public view returns(uint256) {
+    require(checkpointId <= currentCheckpointId, "Invalid checkpoint");
+    return getValueAt(checkpointBalances[holder], checkpointId, balanceOf(holder));
   }
 
   /**
    * @notice Queries totalSupply as of a defined checkpoint
-   * @param _checkpointId Checkpoint ID to query
+   * @param checkpointId Checkpoint ID to query
    * @return uint256
    */
-  function totalSupplyAt(uint256 _checkpointId) public view returns(uint256) {
-    require(_checkpointId <= currentCheckpointId, "Invalid checkpoint");
-    return checkpointTotalSupply[_checkpointId];
+  function totalSupplyAt(uint256 checkpointId) public view returns(uint256) {
+    require(checkpointId <= currentCheckpointId, "Invalid checkpoint");
+    return checkpointTotalSupply[checkpointId];
   }
 
   function createTokenCheckpoint() public returns(uint256) {
@@ -107,97 +107,97 @@ contract CheckpointedToken is CheckpointedTokenStorage, ERC20Mintable, Reentranc
     return currentCheckpointId;
   }
 
-  function _isExistingInvestor(address _investor) internal view returns(bool) {
-    return investorExists[_investor];
+  function _isExistingHolder(address holder) internal view returns(bool) {
+    return holderExists[holder];
   }
 
-  function _adjustInvestorCount(address _from, address _to, uint256 _value) internal {
-    if ((_value == 0) || (_from == _to)) {
+  function _adjustHolderCount(address from, address to, uint256 value) internal {
+    if ((value == 0) || (from == to)) {
       return;
     }
     // Check whether receiver is a new token holder
-    if ((balanceOf(_to) == 0) && (_to != address(0))) {
+    if ((balanceOf(to) == 0) && (to != address(0))) {
       holderCount = holderCount.add(1);
-      if (!_isExistingInvestor(_to)) {
-        investors.push(_to);
-        investorExists[_to] = true;
+      if (!_isExistingHolder(to)) {
+        holders.push(to);
+        holderExists[to] = true;
       }
     }
     // Check whether sender is moving all of their tokens
-    if (_value == balanceOf(_from)) {
+    if (value == balanceOf(from)) {
       holderCount = holderCount.sub(1);
     }
   }
 
   /**
    * @notice Internal - adjusts token holder balance at checkpoint before a token transfer
-   * @param _investor address of the token holder affected
+   * @param holder address of the token holder affected
    */
-  function _adjustBalanceCheckpoints(address _investor) internal {
+  function _adjustBalanceCheckpoints(address holder) internal {
     //No checkpoints set yet
     if (currentCheckpointId == 0) {
       return;
     }
     //No new checkpoints since last update
     if (
-      (checkpointBalances[_investor].length > 0) 
-      && (checkpointBalances[_investor][checkpointBalances[_investor].length - 1].checkpointId == currentCheckpointId)
+      (checkpointBalances[holder].length > 0) 
+      && (checkpointBalances[holder][checkpointBalances[holder].length - 1].checkpointId == currentCheckpointId)
     ) {
       return;
     }
     //New checkpoint, so record balance
-    checkpointBalances[_investor].push(Checkpoint({checkpointId: currentCheckpointId, value: balanceOf(_investor)}));
+    checkpointBalances[holder].push(Checkpoint({checkpointId: currentCheckpointId, value: balanceOf(holder)}));
   }
 
   /**
    * @notice Updates internal variables when performing a transfer
-   * @param _from sender of transfer
-   * @param _to receiver of transfer
-   * @param _value value of transfer
+   * @param from sender of transfer
+   * @param to receiver of transfer
+   * @param value value of transfer
    * @return bool success
    */
-  function _updateTransfer(address _from, address _to, uint256 _value) internal nonReentrant returns(bool verified) {
+  function _updateTransfer(address from, address to, uint256 value) internal nonReentrant returns(bool verified) {
     // NB - the ordering in this function implies the following:
-    //  - investor counts are updated before transfer managers are called - i.e. transfer managers will see
-    //investor counts including the current transfer.
+    //  - holder counts are updated before transfer managers are called - i.e. transfer managers will see
+    //holder counts including the current transfer.
     //  - checkpoints are updated after the transfer managers are called. This allows TMs to create
     //checkpoints as though they have been created before the current transactions,
     //  - to avoid the situation where a transfer manager transfers tokens, and this function is called recursively,
     //the function is marked as nonReentrant. This means that no TM can transfer (or mint / burn) tokens in the execute transfer function.
-    _adjustInvestorCount(_from, _to, _value);
-    _adjustBalanceCheckpoints(_from);
-    _adjustBalanceCheckpoints(_to);
+    _adjustHolderCount(from, to, value);
+    _adjustBalanceCheckpoints(from);
+    _adjustBalanceCheckpoints(to);
   }
 
   function _mint(
-    address _tokenHolder,
-    uint256 _value
+    address tokenHolder,
+    uint256 value
   )
     internal
   {
-    _updateTransfer(address(0), _tokenHolder, _value);
-    super._mint(_tokenHolder, _value);
+    _updateTransfer(address(0), tokenHolder, value);
+    super._mint(tokenHolder, value);
   }
 
   function _transfer(
-    address _to,
-    uint256 _value
+    address to,
+    uint256 value
   ) 
     internal
   {
-    _updateTransfer(msg.sender, _to, _value);
-    super._transfer(msg.sender, _to, _value);
+    _updateTransfer(msg.sender, to, value);
+    super._transfer(msg.sender, to, value);
   }
 
   function _transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
+    address from,
+    address to,
+    uint256 value
   ) 
     internal
   { 
-    _updateTransfer(_from, _to, _value);
-    super._transfer(_from, _to, _value);
+    _updateTransfer(from, to, value);
+    super._transfer(from, to, value);
   }
 
 }

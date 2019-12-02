@@ -1,9 +1,9 @@
 /**
- * DISCLAIMER: Under certain conditions, the function distributeFunds
+ * DISCLAIMER: Under certain conditions, the function pushFunds
  * may fail due to block gas limits.
- * If the total number of investors that ever held tokens is greater than ~15,000 then
- * the function may fail. If this happens investors can pull their deposits, or the Issuer
- * can use distributeFundsToAddresses to provide an explict address list in batches
+ * If the total number of holders that ever held tokens is greater than ~15,000 then
+ * the function may fail. If this happens holders can pull their share, or the Issuer
+ * can use pushFundsToAddresses to provide an explict address list in batches
  */
 pragma solidity 0.5.8;
 pragma experimental ABIEncoderV2;
@@ -18,105 +18,97 @@ import "./IFundsDistributionToken.sol";
 
 
 /**
- * @title Checkpoint module for issuing ether deposits
+ * @title Logic for distributing funds based on checkpointing
  * @dev abstract contract
  */
 contract FDTCheckpoint is FDTCheckpointStorage, CheckpointedToken, Ownable, IFundsDistributionToken {
   using SafeMath for uint256;
 
 
-  function _validDepositIndex(uint256 _depositId) internal view {
-    require(_depositId < deposits.length, "Invalid deposit");
+  function _validDepositIndex(uint256 depositId) internal view {
+    require(depositId < deposits.length, "Invalid deposit");
   }
 
   /**
-   * @notice Function used to intialize the contract variables
-   * @param _wallet Ethereum account address to receive reclaimed deposits
+   * @notice Issuer can push funds to provided addresses
+   * @param depositId Id of deposit to distribute funds for
+   * @param payees Addresses to which to push the funds
    */
-  constructor (address payable _wallet) public {
-    wallet = _wallet;
-  }
-
-  /**
-   * @notice Issuer can push deposits to provided addresses
-   * @param _depositId Deposit to push
-   * @param _payees Addresses to which to push the deposit
-   */
-  function distributeFundsToAddresses(
-    uint256 _depositId,
-    address payable[] memory _payees
+  function pushFundsToAddresses(
+    uint256 depositId,
+    address payable[] memory payees
   )
     public
   {
-    _validDepositIndex(_depositId);
-    Deposit storage deposit = deposits[_depositId];
-    for (uint256 i = 0; i < _payees.length; i++) {
-      if ((!deposit.claimed[_payees[i]])) {
-        _transferFunds(_payees[i], deposit, _depositId);
+    _validDepositIndex(depositId);
+    Deposit storage deposit = deposits[depositId];
+    for (uint256 i = 0; i < payees.length; i++) {
+      if ((!deposit.claimed[payees[i]])) {
+        _transferFunds(payees[i], deposit, depositId);
       }
     }
   }
 
   /**
-   * @notice Issuer can push deposits using the investor list from the security token
-   * @param _depositId Deposit to push
-   * @param _start Index in investor list at which to start pushing deposits
-   * @param _end Index in investor list at which to stop pushing deposits
+   * @notice Issuer can push funds using the holder list from the CheckpointedToken
+   * @param depositId Id of the deposit to distribute funds for
+   * @param start Index in holder list at which to start distributing funds
+   * @param end Index in holder list at which to stop distributing funds
    */
-  function distributeFunds(
-    uint256 _depositId,
-    uint256 _start,
-    uint256 _end
+  function pushFunds(
+    uint256 depositId,
+    uint256 start,
+    uint256 end
   )
     public
   {
-    //NB If possible, please use distributeFundsToAddresses as it is cheaper than this function
-    _validDepositIndex(_depositId);
-    Deposit storage deposit = deposits[_depositId];
+    //NB If possible, please use pushFundsToAddresses as it is cheaper than this function
+    _validDepositIndex(depositId);
+    Deposit storage deposit = deposits[depositId];
     uint256 checkpointId = deposit.checkpointId;
-    address[] memory investors = getInvestorsSubsetAt(checkpointId, _start, _end);
-    // The investors list maybe smaller than _end - _start becuase it only contains addresses that had a positive balance
-    // the _start and _end used here are for the address list stored in the dataStore
-    for (uint256 i = 0; i < investors.length; i++) {
-      address payable payee = address(uint160(investors[i]));
+    address[] memory holders = getHolderSubsetAt(checkpointId, start, end);
+    // The holders list maybe smaller than end - start becuase it only contains addresses that had a positive balance
+    // the start and end used here are for the address list stored in the dataStore
+    for (uint256 i = 0; i < holders.length; i++) {
+      address payable payee = address(uint160(holders[i]));
       if (!deposit.claimed[payee]) {
-        _transferFunds(payee, deposit, _depositId);
+        _transferFunds(payee, deposit, depositId);
       }
     }
   }
 
   /**
-   * @notice Investors can pull their own deposits
-   * @param _depositId Deposit to pull
+   * @notice Holders can withdraw their share of funds
+   * @param depositId Id of the deposit to withdraw
    */
-  function withdrawFunds(uint256 _depositId) public {
-    _validDepositIndex(_depositId);
-    Deposit storage deposit = deposits[_depositId];
+  function withdrawFunds(uint256 depositId) public {
+    _validDepositIndex(depositId);
+    Deposit storage deposit = deposits[depositId];
     require(!deposit.claimed[msg.sender], "Deposit already claimed");
-    _transferFunds(msg.sender, deposit, _depositId);
+    _transferFunds(msg.sender, deposit, depositId);
   }
 
   /**
-   * @notice Internal function for paying deposits
-   * @param _payee Address of investor
-   * @param _dividend Storage with previously issued deposits
-   * @param _depositId Deposit to pay
+   * @notice Internal function for transferring deposits
+   * @param payee Address of holder
+   * @param deposit Pointer to deposit in storage
+   * @param depositId Id of the deposit to transfer
    */
-  function _transferFunds(address payable _payee, Deposit storage _dividend, uint256 _depositId) internal;
+  function _transferFunds(address payable payee, Deposit storage deposit, uint256 depositId) internal;
 
   /**
-   * @notice Calculate amount of deposits claimable
-   * @param _payee Affected investor address
-   * @param _depositId Deposit to calculate
-   * @return claim
+   * @notice Calculate amount withdrawable funds for a given address
+   * @param payee Address of holder
+   * @param depositId Id of the deposit
+   * @return withdrawable amount
    */
-  function withdrawableFundsOf(address _payee, uint256 _depositId) public view returns(uint256) {
-    require(_depositId < deposits.length, "Invalid deposit");
-    Deposit storage deposit = deposits[_depositId];
-    if (deposit.claimed[_payee]) {
+  function withdrawableFundsOf(address payee, uint256 depositId) public view returns(uint256) {
+    require(depositId < deposits.length, "Invalid deposit");
+    Deposit storage deposit = deposits[depositId];
+    if (deposit.claimed[payee]) {
       return (0);
     }
-    uint256 balance = balanceOfAt(_payee, deposit.checkpointId);
+    uint256 balance = balanceOfAt(payee, deposit.checkpointId);
     uint256 claim = balance.mul(deposit.amount).div(deposit.totalSupply);
     return (claim);
   }
@@ -125,7 +117,7 @@ contract FDTCheckpoint is FDTCheckpointStorage, CheckpointedToken, Ownable, IFun
    * @notice Get static deposit data
    * @return uint256[] timestamp of deposits creation
    * @return uint256[] amount of deposits
-   * @return uint256[] claimed amount of deposits
+   * @return uint256[] claimed amount of of the deposits
    */
   function getDepositsData() 
     external
@@ -144,25 +136,25 @@ contract FDTCheckpoint is FDTCheckpointStorage, CheckpointedToken, Ownable, IFun
    * @notice Get static deposit data
    * @return uint256 timestamp of deposit creation
    * @return uint256 amount of deposit
-   * @return uint256 claimed amount of deposit
+   * @return uint256 claimed amount of the deposit
    */
-  function getDepositData(uint256 _depositId) 
+  function getDepositData(uint256 depositId) 
     public
     view 
     returns (uint256 created, uint256 amount, uint256 claimedAmount)
   {
-    created = deposits[_depositId].created;
-    amount = deposits[_depositId].amount;
-    claimedAmount = deposits[_depositId].claimedAmount;
+    created = deposits[depositId].created;
+    amount = deposits[depositId].amount;
+    claimedAmount = deposits[depositId].claimedAmount;
   }
 
   /**
-   * @notice Checks whether an address has claimed a deposit
-   * @param _depositId Deposit to withdraw from
+   * @notice Checks whether an address has withdrawn funds for a deposit
+   * @param depositId Id of the deposit to withdraw funds from
    * @return bool whether the address has claimed
    */
-  function isClaimed(address _investor, uint256 _depositId) external view returns (bool) {
-    require(_depositId < deposits.length, "Invalid deposit");
-    return deposits[_depositId].claimed[_investor];
+  function isClaimed(address holder, uint256 depositId) external view returns (bool) {
+    require(depositId < deposits.length, "Invalid deposit");
+    return deposits[depositId].claimed[holder];
   }
 }

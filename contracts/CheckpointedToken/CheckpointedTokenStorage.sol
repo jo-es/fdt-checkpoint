@@ -9,13 +9,13 @@ contract CheckpointedTokenStorage is Checkpoint {
   // Mapping of checkpoints that relate to total supply
   mapping(uint256 => uint256) checkpointTotalSupply;
 
-  // Map each investor to a series of checkpoints
+  // Map each holder to a series of checkpoints
   mapping(address => Checkpoint[]) checkpointBalances;
 
-  address[] investors;
+  address[] holders;
 
-  mapping(address => bool) investorExists;
+  mapping(address => bool) holderExists;
 
-  // Number of investors with non-zero balance
+  // Number of holders with non-zero balance
   uint256 public holderCount;
 }
